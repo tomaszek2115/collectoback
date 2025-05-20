@@ -1,0 +1,9 @@
+<h1>Items in {{ name }}, category ID: {{ category_id }}</h1>
+{% for item in items %}
+    <h3>Item ID: {{ item.id }}</h3>
+    <ul>
+        {% for val in item.values %}
+            <li><strong>{{ get_attr_name(val.field_id) }}:</strong> {{ val.value }}</li>
+        {% endfor %}
+     </ul>
+{% endfor %}
