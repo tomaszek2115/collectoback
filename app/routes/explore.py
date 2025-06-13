@@ -15,7 +15,7 @@ class ExploreCategoriesResource(Resource):
         current_user_id = get_jwt_identity()
 
         if not is_following(current_user_id, user_id):
-            return {'error': 'You are not following this user'}, 403
+            return {'error': 'you are not following this user'}, 403
 
         categories = Category.query.filter_by(owner_id=user_id).all()
         return [{'id': cat.id, 'name': cat.name} for cat in categories], 200
@@ -27,7 +27,7 @@ class ExploreItemsResource(Resource):
         current_user_id = get_jwt_identity()
 
         if not is_following(current_user_id, user_id):
-            return {'error': 'You are not following this user'}, 403
+            return {'error': 'you are not following this user'}, 403
 
         items = Item.query.filter_by(owner_id=user_id, category_id=category_id).all()
         result = []

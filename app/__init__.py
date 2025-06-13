@@ -22,7 +22,7 @@ def create_app():
         # this should be changed later, moved to the env file
         JWT_SECRET_KEY = "dev",
         SECRET_KEY = 'dev', 
-        SQLALCHEMY_DATABASE_URI='sqlite:////Users/tomaszek/Documents/uni/semestr_VI/Współczesne aplikacje webowe/backend/instance/collecto.sqlite',
+        SQLALCHEMY_DATABASE_URI='sqlite:///C:/Users/zuzia/Documents/GitHub/collectoback/instance/collecto.sqlite',
         SQLALCHEMY_TRACK_MODIFICATIONS = False,
         RESTX_MASK_SWAGGER = False
     )
@@ -48,7 +48,7 @@ def create_app():
         }
     }
 
-    # Setup API and Swagger UI
+    # setup API and Swagger UI
     api = Api(
           app,
           version='1.0',

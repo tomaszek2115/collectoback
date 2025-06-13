@@ -10,7 +10,7 @@ user_model = categories_ns.model('User_dashboard', {
     'email': fields.String,
 })
 
-# Category output model
+# category output model
 category_model = categories_ns.model('Category', {
     'id': fields.Integer,
     'name': fields.String,
@@ -46,16 +46,16 @@ class CategoryListResource(Resource):
         name = data.get('name')
         attributes = data.get('attributes', [])
 
-        # Check for duplicates
+        # check for duplicates
         if Category.query.filter_by(name=name, owner_id=user_id).first():
-            categories_ns.abort(400, 'Category with this name already exists.')
+            categories_ns.abort(400, 'category with this name already exists.')
 
-        # Create category
+        # create category
         new_category = Category(name=name, owner_id=user_id)
         db.session.add(new_category)
         db.session.flush()  # get ID before commit
 
-        # Add attributes
+        # add attributes
         for attr in attributes:
             attr_name = attr['name']
             data_type = attr['data_type']
@@ -64,3 +64,25 @@ class CategoryListResource(Resource):
 
         db.session.commit()
         return new_category, 201
+    
+
+@categories_ns.route('/<int:category_id>')
+class CategoryResource(Resource):
+    @jwt_required()
+    def get(self, category_id):
+        user_id = get_jwt_identity()
+        category = Category.query.filter_by(id=category_id, owner_id=user_id).first()
+        if not category:
+            return {'error': 'category not found'}, 404
+
+        attributes = [{
+            'id': attr.id, 
+            'name': attr.name, 
+            'attribute_type': attr.attribute_type
+        } for attr in category.attributes]
+
+        return {
+            'id': category.id,
+            'name': category.name,
+            'attributes': attributes
+        }

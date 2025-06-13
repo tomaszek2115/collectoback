@@ -22,7 +22,7 @@ class ExportResource(Resource):
         items = Item.query.filter_by(owner_id=user_id, category_id=category_id).all()
 
         if not items:
-            return {'message': 'No items found'}, 404
+            return {'message': 'no items found'}, 404
 
         rendered = render_template(
             'export.html',

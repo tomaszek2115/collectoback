@@ -8,6 +8,7 @@ items_ns = Namespace('items', description='item related operations')
 attribute_value_model = items_ns.model('AttributeValue', {
     'attribute_name': fields.String,
     'value': fields.String,
+    'field_id': fields.Integer 
 })
 
 item_model = items_ns.model('Item', {
@@ -36,14 +37,15 @@ class ItemDetailResource(Resource):
         item = Item.query.filter_by(id=item_id, owner_id=user_id).first()
 
         if not item:
-            return {'error': 'Item not found'}, 404
+            return {'error': 'item not found'}, 404
 
         attribute_values = []
         for val in item.values:
             attribute = CategoryAttribute.query.get(val.field_id)
             attribute_values.append({
                 'attribute_name': attribute.name if attribute else None,
-                'value': val.value
+                'value': val.value,
+                'field_id': val.field_id
             })
 
         return {
@@ -58,11 +60,11 @@ class ItemDetailResource(Resource):
 
         item = Item.query.filter_by(id=item_id, owner_id=user_id).first()
         if not item:
-            return {'error': 'Item not found or unauthorized'}, 404
+            return {'error': 'item not found or unauthorized'}, 404
 
         db.session.delete(item)
         db.session.commit()
-        return {'message': 'Item deleted successfully'}, 200
+        return {'message': 'item deleted successfully'}, 200
 
     @items_ns.expect(item_create_input)  # reusing the same model for editing
     @jwt_required()
@@ -72,25 +74,25 @@ class ItemDetailResource(Resource):
 
         item = Item.query.filter_by(id=item_id, owner_id=user_id).first()
         if not item:
-            return {'error': 'Item not found or unauthorized'}, 404
+            return {'error': 'item not found or unauthorized'}, 404
 
         category_id = data.get('category_id')
         new_values = data.get('values', [])
 
         if category_id != item.category_id:
-            return {'error': 'Changing item category is not allowed'}, 400
+            return {'error': 'changing item category is not allowed'}, 400
 
-        # Clear old values
+        # clear old values
         ItemAttributeValue.query.filter_by(item_id=item.id).delete()
 
-        # Insert new values
+        # insert new values
         for val in new_values:
             field_id = val.get('field_id')
             value = val.get('value')
 
             attribute = CategoryAttribute.query.filter_by(id=field_id, category_id=category_id).first()
             if not attribute:
-                return {'error': f'Attribute ID {field_id} does not belong to category {category_id}'}, 400
+                return {'error': f'attribute ID {field_id} does not belong to category {category_id}'}, 400
 
             item_value = ItemAttributeValue(
                 item_id=item.id,
@@ -100,7 +102,7 @@ class ItemDetailResource(Resource):
             db.session.add(item_value)
 
         db.session.commit()
-        return {'message': 'Item updated successfully'}, 200
+        return {'message': 'item updated successfully'}, 200
     
 @items_ns.route('/all/<int:category_id>')
 class ItemListResource(Resource):
@@ -109,12 +111,12 @@ class ItemListResource(Resource):
     def get(self, category_id):
         user_id = get_jwt_identity()
 
-        # Fetch items owned by user and belonging to the given category
+        # fetch items owned by user and belonging to the given category
         items = Item.query.filter_by(owner_id=user_id, category_id=category_id).all()
 
         result = []
         for item in items:
-            # Only fetch the first attribute value (if it exists)
+            # only fetch the first attribute value (if it exists)
             first_value = item.values[0] if item.values else None
 
             attribute_data = []
@@ -137,7 +139,7 @@ class ItemListResource(Resource):
 @items_ns.route('')
 class ItemListResource(Resource):
     @items_ns.expect(item_create_input)
-    @items_ns.response(201, 'Item created successfully')
+    @items_ns.response(201, 'item created successfully')
     @jwt_required()
     def post(self):
         user_id = get_jwt_identity()
@@ -149,22 +151,22 @@ class ItemListResource(Resource):
         # Validate category ownership
         category = Category.query.filter_by(id=category_id, owner_id=user_id).first()
         if not category:
-            return {'error': 'Invalid category or access denied'}, 403
+            return {'error': 'invalid category or access denied'}, 403
 
-        # Create the item
+        # create the item
         new_item = Item(category_id=category_id, owner_id=user_id)
         db.session.add(new_item)
         db.session.flush()  # get new_item.id
 
-        # Add attribute values
+        # add attribute values
         for val in values:
             field_id = val.get('field_id')
             value = val.get('value')
 
-            # Validate the field belongs to this category
+            # validate the field belongs to this category
             attribute = CategoryAttribute.query.filter_by(id=field_id, category_id=category_id).first()
             if not attribute:
-                return {'error': f'Attribute ID {field_id} does not belong to category {category_id}'}, 400
+                return {'error': f'attribute ID {field_id} does not belong to category {category_id}'}, 400
 
             item_value = ItemAttributeValue(
                 item_id=new_item.id,
@@ -174,4 +176,4 @@ class ItemListResource(Resource):
             db.session.add(item_value)
 
         db.session.commit()
-        return {'message': 'Item created successfully'}, 201
+        return {'message': 'item created successfully'}, 201
